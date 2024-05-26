@@ -3,10 +3,26 @@ import { createClient } from "@supabase/supabase-js"
 import { cookies } from "next/headers"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 
-export async function addWord(word: string, definition: string) {
-  const supabaseUrl = "https://cmaesneutenjsfynvjnm.supabase.co"
+interface FormData {
+  firstName: string
+  lastName: string
+  username: string
+  address: string
+  facebook: string
+  twitter: string
+  instagram: string
+  bio: string
+  email: string // Type notation for email as string
+  phone: number
+  dob: null
+}
+
+export async function addProfile(formData: FormData) {
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  const supabase = createClient(supabaseUrl, supabaseKey)
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    supabaseKey
+  )
 
   const supabaseUser = createServerComponentClient({ cookies })
 
@@ -15,35 +31,23 @@ export async function addWord(word: string, definition: string) {
   } = await supabaseUser.auth.getSession()
 
   const { data, error } = await supabase
-    .from("words")
-    .insert([
-      { word: word, definition: definition, creator_id: session.user.id },
-    ])
+    .from("user_profiles")
+    .insert([{ ...formData, creator_id: session.user.id }])
     .select()
 
   if (error) {
-    throw new Error(`Failed to add word: ${error.message}`)
-  }
-
-  return data ? data[0].id : null // Return the ID of the newly created word entry
-}
-
-export async function deleteWord(wordId: string) {
-  const supabaseUrl = "https://cmaesneutenjsfynvjnm.supabase.co"
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  const supabase = createClient(supabaseUrl, supabaseKey)
-
-  try {
-    const { data, error } = await supabase
-      .from("words")
-      .delete()
-      .eq("id", wordId)
-
-    if (error) {
-      throw error
+    console.log(error)
+    if (error.code === "23505") {
+      // Error message indicates that the username is already taken
+      return {
+        code: "23505",
+        type: "error",
+        message:
+          "Username is already taken. Please choose a different username.",
+      }
+    } else {
+      // For other errors, return a generic error message
+      return { type: "error", message: `Failed to add word: ${error.message}` }
     }
-  } catch (error) {
-    console.error("Error deleting word:", error.message)
-    throw error
   }
 }
