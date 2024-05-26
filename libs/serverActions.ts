@@ -17,15 +17,53 @@ interface FormData {
   dob: null
 }
 
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, supabaseKey)
+
+const supabaseUser = createServerComponentClient({ cookies })
+
+export async function getProfile() {
+  const {
+    data: { session },
+  } = await supabaseUser.auth.getSession()
+
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("*")
+    .eq("creator_id", session.user.id)
+    .single()
+
+  if (error) {
+    console.log(error)
+    return { type: "error", message: `Failed to get profile: ${error.message}` }
+  }
+
+  return { type: "success", data }
+}
+
+export async function editProfile(formData: FormData) {
+  const {
+    data: { session },
+  } = await supabaseUser.auth.getSession()
+
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .update(formData)
+    .eq("creator_id", session.user.id)
+    .select()
+
+  if (error) {
+    console.log(error)
+    return {
+      type: "error",
+      message: `Failed to update profile: ${error.message}`,
+    }
+  }
+
+  return { type: "success", data }
+}
+
 export async function addProfile(formData: FormData) {
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    supabaseKey
-  )
-
-  const supabaseUser = createServerComponentClient({ cookies })
-
   const {
     data: { session },
   } = await supabaseUser.auth.getSession()
@@ -47,7 +85,12 @@ export async function addProfile(formData: FormData) {
       }
     } else {
       // For other errors, return a generic error message
-      return { type: "error", message: `Failed to add word: ${error.message}` }
+      return {
+        type: "error",
+        message: `Failed to add profile: ${error.message}`,
+      }
     }
   }
+
+  return { type: "success", data }
 }

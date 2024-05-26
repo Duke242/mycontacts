@@ -23,7 +23,6 @@ interface AdminProps {
 
 function Admin({ initialProfile }: AdminProps) {
   const [formData, setFormData] = useState<FormData>(initialProfile)
-  const [usernameError, setUsernameError] = useState<string>("")
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -38,11 +37,6 @@ function Admin({ initialProfile }: AdminProps) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
-    if (usernameError) {
-      toast.error("Fix the errors before submitting the form.")
-      return
-    }
-
     const response = await editProfile(formData)
     if (response.type === "success") {
       toast.success("Profile updated successfully")
@@ -52,143 +46,156 @@ function Admin({ initialProfile }: AdminProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          First Name:
-        </label>
-        <input
-          type="text"
-          name="firstName"
-          value={formData.firstName}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Last Name:
-        </label>
-        <input
-          type="text"
-          name="lastName"
-          value={formData.lastName}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Username:
-        </label>
-        <input
-          type="text"
-          name="username"
-          value={formData.username}
-          readOnly
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-gray-100"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Address:
-        </label>
-        <input
-          type="text"
-          name="address"
-          value={formData.address}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Facebook:
-        </label>
-        <input
-          type="text"
-          name="facebook"
-          value={formData.facebook}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Twitter:
-        </label>
-        <input
-          type="text"
-          name="twitter"
-          value={formData.twitter}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Instagram:
-        </label>
-        <input
-          type="text"
-          name="instagram"
-          value={formData.instagram}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Bio:</label>
-        <textarea
-          name="bio"
-          value={formData.bio}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Email:
-        </label>
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Phone:
-        </label>
-        <input
-          type="text"
-          name="phone"
-          value={formData.phone}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Date of Birth:
-        </label>
-        <input
-          type="date"
-          name="dob"
-          value={formData.dob}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-      </div>
-      <button
-        type="submit"
-        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+    <div className="flex justify-center items-center mt-2">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-gray-200 p-8 md:mt-0 mt-4 rounded-lg shadow-2xl w-full max-w-6xl"
       >
-        Update Profile
-      </button>
-    </form>
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700">
+            Username:
+          </label>
+          <input
+            type="text"
+            name="username"
+            value={formData.username}
+            readOnly
+            className="w-3/4 p-2 border border-gray-300 rounded mt-1 bg-gray-300"
+          />
+          <p>Your URL: mywebsite.com/{formData.username}</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              First Name:
+            </label>
+            <input
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Last Name:
+            </label>
+            <input
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Address:
+            </label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Facebook:
+            </label>
+            <input
+              type="text"
+              name="facebook"
+              value={formData.facebook}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Twitter:
+            </label>
+            <input
+              type="text"
+              name="twitter"
+              value={formData.twitter}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Instagram:
+            </label>
+            <input
+              type="text"
+              name="instagram"
+              value={formData.instagram}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Email:
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Phone:
+            </label>
+            <input
+              type="text"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Date of Birth:
+            </label>
+            <input
+              type="date"
+              name="dob"
+              value={formData.dob}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded mt-1"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Bio:
+            </label>
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleChange}
+              className="w-full mx-auto p-2 border border-gray-300 rounded mt-1"
+            />
+          </div>
+        </div>
+        <div className="flex">
+          <button
+            type="submit"
+            className="flex inline-flex mx-auto mt-4 justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Update Profile
+          </button>
+        </div>
+      </form>
+    </div>
   )
 }
 

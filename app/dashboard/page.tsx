@@ -40,13 +40,21 @@ export default async function Dashboard() {
 
     if (profileError) {
     }
-    console.log({ userProfile })
 
     const userAccess = profiles.has_access
     const username = userProfile?.username // Add the null check here
 
     if (username) {
-      return <Admin initialProfile={userProfile} />
+      return (
+        <main className="min-h-screen p-8 pb-24 bg-base-100">
+          <header className="max-w-xl mr-auto space-y-8 flex align-center mb-0">
+            <ButtonAccount />
+          </header>
+          <section>
+            <Admin initialProfile={userProfile} />
+          </section>
+        </main>
+      )
     }
 
     if (userAccess) {

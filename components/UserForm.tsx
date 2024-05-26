@@ -2,6 +2,7 @@
 import { addProfile } from "@/libs/serverActions"
 import React, { useState, ChangeEvent, FormEvent } from "react"
 import toast from "react-hot-toast"
+import { useRouter } from "next/navigation"
 
 interface FormData {
   firstName: string
@@ -18,6 +19,8 @@ interface FormData {
 }
 
 const UserForm: React.FC = () => {
+  const router = useRouter()
+
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -29,7 +32,7 @@ const UserForm: React.FC = () => {
     bio: "",
     email: "",
     phone: undefined,
-    dob: null,
+    dob: undefined,
   })
   const [usernameError, setUsernameError] = useState<string>("")
 
@@ -75,6 +78,7 @@ const UserForm: React.FC = () => {
         } else {
           // Handle success response
           toast.success("Success")
+          router.refresh()
           // You might want to redirect the user or show a success message
         }
       })
