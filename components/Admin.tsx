@@ -1,6 +1,10 @@
 "use client"
-import React, { useState, ChangeEvent, FormEvent } from "react"
+import React, { useState, useEffect, ChangeEvent, FormEvent } from "react"
 import { editProfile } from "@/libs/serverActions"
+import {
+  getFriendRequests,
+  respondToFriendRequest,
+} from "@/libs/friendRequests"
 import toast from "react-hot-toast"
 
 interface FormData {
@@ -17,12 +21,39 @@ interface FormData {
   dob: null
 }
 
-interface AdminProps {
-  initialProfile: FormData
+interface FriendRequest {
+  id: string
 }
 
-function Admin({ initialProfile }: AdminProps) {
+interface AdminProps {
+  initialProfile: FormData
+  session: string
+}
+
+function Admin({ initialProfile, session }: AdminProps) {
   const [formData, setFormData] = useState<FormData>(initialProfile)
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([])
+
+  useEffect(() => {
+    const fetchFriendRequests = async () => {
+      try {
+        const response = await getFriendRequests(session)
+        console.log({ response })
+        if (response.type === "success") {
+          const formattedFriendRequests = response.data.map((request) => ({
+            id: request.id,
+          }))
+          setFriendRequests(formattedFriendRequests)
+        } else {
+          toast.error(response.message)
+        }
+      } catch (error) {
+        console.error("Error fetching friend requests:", error)
+        toast.error("Failed to fetch friend requests")
+      }
+    }
+    fetchFriendRequests()
+  }, [initialProfile.email])
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -45,8 +76,25 @@ function Admin({ initialProfile }: AdminProps) {
     }
   }
 
+  const handleFriendRequestResponse = async (
+    requestId: string,
+    accept: boolean
+  ) => {
+    const response = await respondToFriendRequest(requestId, accept)
+    if (response.type === "success") {
+      toast.success(
+        `Friend request ${accept ? "accepted" : "rejected"} successfully`
+      )
+      setFriendRequests(
+        friendRequests.filter((request) => request.id !== requestId)
+      )
+    } else {
+      toast.error(response.message)
+    }
+  }
+
   return (
-    <div className="flex justify-center items-center mt-2">
+    <div className="flex flex-col-reverse justify-center items-center mt-2">
       <form
         onSubmit={handleSubmit}
         className="bg-gray-200 p-8 md:mt-0 mt-4 rounded-lg shadow-2xl w-full max-w-6xl"
@@ -195,6 +243,31 @@ function Admin({ initialProfile }: AdminProps) {
           </button>
         </div>
       </form>
+      <div className="mt-8">
+        <h2 className="text-xl font-bold mb-4">Friend Requests</h2>
+        {friendRequests.length === 0 ? (
+          <p>No friend requests</p>
+        ) : (
+          <ul>
+            {friendRequests.map((request) => (
+              <li key={request.id} className="mb-4">
+                <button
+                  onClick={() => handleFriendRequestResponse(request.id, true)}
+                  className="mr-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700"
+                >
+                  Accept
+                </button>
+                <button
+                  onClick={() => handleFriendRequestResponse(request.id, false)}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700"
+                >
+                  Reject
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   )
 }

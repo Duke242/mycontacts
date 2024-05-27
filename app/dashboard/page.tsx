@@ -51,7 +51,7 @@ export default async function Dashboard() {
             <ButtonAccount />
           </header>
           <section>
-            <Admin initialProfile={userProfile} />
+            <Admin initialProfile={userProfile} session={session.user.id} />
           </section>
         </main>
       )
