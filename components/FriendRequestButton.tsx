@@ -21,7 +21,7 @@ const FriendRequestButton: React.FC<FriendRequestButtonProps> = ({
     }
 
     setLoading(true)
-    const response = await sendFriendRequest(creatorId, session.user.id)
+    const response = await sendFriendRequest(session.user.id, creatorId)
     setLoading(false)
 
     if (response.type === "error") {

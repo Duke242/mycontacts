@@ -132,11 +132,13 @@ function Admin({ initialProfile, session }: AdminProps) {
     const fetchFriendRequests = async () => {
       try {
         const response = await getFriendRequests(session)
+        console.log({ response })
         if (response.type === "success") {
           const formattedFriendRequests = response.data.map((request) => ({
             id: request.id,
             senderEmail: request.sender_email,
           }))
+          console.log(formattedFriendRequests)
           if (formattedFriendRequests.length > 0) {
             setFriendRequests(formattedFriendRequests)
             setNewFriendRequest(true)
@@ -252,7 +254,9 @@ function Admin({ initialProfile, session }: AdminProps) {
                     <li key={request.id} className="mb-4">
                       <p>Sender Email: {request.senderEmail}</p>
                       <button
-                        onClick={handleToggleFriends}
+                        onClick={() =>
+                          handleFriendRequestResponse(request.id, true)
+                        }
                         className="mr-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700"
                       >
                         Accept

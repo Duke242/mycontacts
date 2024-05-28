@@ -5,6 +5,7 @@ import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 
 export async function sendFriendRequest(senderId: string, receiverId: string) {
   const supabase = createServerComponentClient({ cookies })
+  console.log({ senderId: senderId, receiverId: receiverId })
 
   // Check if the sender and receiver are the same
   if (senderId === receiverId) {
