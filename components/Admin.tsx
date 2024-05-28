@@ -80,40 +80,60 @@ const ConnectionList: React.FC<ConnectionListProps> = ({
 
   return (
     <ul>
-      {connections.map((connection) => (
-        <li key={connection.id} className="mb-4 flex flex-col">
-          <p>Friend Email: {connection.friend_email}</p>
-          <label>
-            Permission Level:
-            <select
-              value={
-                selectedPermissionLevels[connection.id] !== undefined
-                  ? selectedPermissionLevels[connection.id]
-                  : connection.permission_level
-              }
-              onChange={(e) =>
-                handlePermissionLevelChange(
-                  connection.id,
-                  parseInt(e.target.value)
-                )
-              }
-              className="text-xl ml-2"
+      {connections.length === 0 ? (
+        <p>
+          No connections yet. Start growing your network by connecting with
+          others on our site.
+        </p>
+      ) : (
+        connections.map((connection) => (
+          <li key={connection.id} className="mb-4 flex flex-col">
+            <p>Friend Email: {connection.friend_email}</p>
+            <label>
+              Permission Level:
+              <select
+                value={
+                  selectedPermissionLevels[connection.id] !== undefined
+                    ? selectedPermissionLevels[connection.id]
+                    : connection.permission_level
+                }
+                onChange={(e) =>
+                  handlePermissionLevelChange(
+                    connection.id,
+                    parseInt(e.target.value)
+                  )
+                }
+                className="text-md ml-2"
+              >
+                <option value={0}>No Access</option>
+                <option value={1}>Limited Access</option>
+                <option value={2}>Moderate Access</option>
+                <option value={3}>Full Access</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={() => handleConfirm(connection.id)}
+              className={`px-4 py-2 bg-${
+                selectedPermissionLevels[connection.id] ===
+                connection.permission_level
+                  ? "green"
+                  : "blue"
+              }-500 text-white rounded hover:bg-${
+                selectedPermissionLevels[connection.id] ===
+                connection.permission_level
+                  ? "green"
+                  : "blue"
+              }-700 w-fit mx-auto mt-2`}
             >
-              <option value={0}>0</option>
-              <option value={1}>1</option>
-              <option value={2}>2</option>
-              <option value={3}>3</option>
-            </select>
-          </label>
-          <button
-            type="button"
-            onClick={() => handleConfirm(connection.id)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 w-fit mx-auto mt-2"
-          >
-            Confirm
-          </button>
-        </li>
-      ))}
+              {selectedPermissionLevels[connection.id] ===
+              connection.permission_level
+                ? "Confirmed"
+                : "Confirm"}
+            </button>
+          </li>
+        ))
+      )}
     </ul>
   )
 }
