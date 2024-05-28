@@ -45,7 +45,7 @@ export default async function Page({
     .from("connections")
     .select("permission_level")
     .eq("user_id", data.creator_id)
-    .eq("connected_user_id", session?.user?.id)
+    .eq("friend_id", session?.user?.id)
     .single()
 
   if (connectionError) {

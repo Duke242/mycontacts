@@ -1,6 +1,10 @@
 "use client"
 import React, { useState, useEffect, ChangeEvent, FormEvent } from "react"
-import { editProfile } from "@/libs/serverActions"
+import {
+  editProfile,
+  getUserConnections,
+  changePermissionLevel,
+} from "@/libs/serverActions"
 import {
   getFriendRequests,
   respondToFriendRequest,
@@ -23,6 +27,15 @@ interface FormData {
 
 interface FriendRequest {
   id: string
+  senderEmail: string // Added senderEmail to the FriendRequest interface
+}
+
+interface Connection {
+  id: string
+  userId: string
+  friend_id: string
+  permissionLevel: number
+  friend_email: string
 }
 
 interface AdminProps {
@@ -33,15 +46,16 @@ interface AdminProps {
 function Admin({ initialProfile, session }: AdminProps) {
   const [formData, setFormData] = useState<FormData>(initialProfile)
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([])
+  const [connections, setConnections] = useState<Connection[]>([])
 
   useEffect(() => {
     const fetchFriendRequests = async () => {
       try {
         const response = await getFriendRequests(session)
-        console.log({ response })
         if (response.type === "success") {
           const formattedFriendRequests = response.data.map((request) => ({
             id: request.id,
+            senderEmail: request.sender_email, // Assign senderEmail from the response to the formattedFriendRequests
           }))
           setFriendRequests(formattedFriendRequests)
         } else {
@@ -54,6 +68,23 @@ function Admin({ initialProfile, session }: AdminProps) {
     }
     fetchFriendRequests()
   }, [initialProfile.email])
+
+  useEffect(() => {
+    const fetchConnections = async () => {
+      try {
+        const response = await getUserConnections(session)
+        if (response.type === "success") {
+          setConnections(response.data)
+        } else {
+          toast.error(response.message)
+        }
+      } catch (error) {
+        console.error("Error fetching connections:", error)
+        toast.error("Failed to fetch connections")
+      }
+    }
+    fetchConnections()
+  }, [session])
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -251,6 +282,8 @@ function Admin({ initialProfile, session }: AdminProps) {
           <ul>
             {friendRequests.map((request) => (
               <li key={request.id} className="mb-4">
+                <p>Sender Email: {request.senderEmail}</p>{" "}
+                {/* Display sender's email */}
                 <button
                   onClick={() => handleFriendRequestResponse(request.id, true)}
                   className="mr-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700"
@@ -267,6 +300,26 @@ function Admin({ initialProfile, session }: AdminProps) {
             ))}
           </ul>
         )}
+      </div>
+      <div className="mt-8">
+        <h2 className="text-xl font-bold mb-4">Friends</h2>
+        <ul>
+          {connections.map((connection) => (
+            <li key={connection.id} className="mb-4">
+              <p>Friend ID: {connection.friend_id}</p>
+              <label>
+                Permission Level:
+                <input
+                  type="number"
+                  value={connection.permissionLevel}
+                  // onChange={(e) =>
+                  // handlePermissionLevelChange(e, connection.id)
+                  // }
+                />
+              </label>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   )

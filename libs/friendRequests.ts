@@ -56,7 +56,7 @@ export async function getFriendRequests(userId: string) {
 
   const { data, error } = await supabase
     .from("friend_requests")
-    .select("id, sender_id, sender_email") // Include sender_email in the selection
+    .select("id, sender_id,sender_email") // Include sender_email in the selection
     .eq("receiver_id", userId)
     .order("created_at", { ascending: false })
 
@@ -77,34 +77,44 @@ export async function respondToFriendRequest(
 ) {
   const supabase = createServerComponentClient({ cookies })
 
-  if (accept) {
-    const { data, error } = await supabase.rpc("accept_friend_request", {
-      request_id: requestId,
-    })
+  try {
+    if (accept) {
+      const { data, error } = await supabase
+        .from("friend_requests")
+        .update({ status: "accepted" })
+        .eq("id", requestId)
+        .select()
 
-    if (error) {
-      console.log(error)
-      return {
-        type: "error",
-        message: `Failed to accept friend request: ${error.message}`,
+      if (error) {
+        console.log(error)
+        return {
+          type: "error",
+          message: `Failed to accept friend request: ${error.message}`,
+        }
       }
-    }
 
-    return { type: "success", data }
-  } else {
-    const { data, error } = await supabase
-      .from("friend_requests")
-      .delete()
-      .eq("id", requestId)
+      return { type: "success", data }
+    } else {
+      const { error } = await supabase
+        .from("friend_requests")
+        .delete()
+        .eq("id", requestId)
 
-    if (error) {
-      console.log(error)
-      return {
-        type: "error",
-        message: `Failed to reject friend request: ${error.message}`,
+      if (error) {
+        console.log(error)
+        return {
+          type: "error",
+          message: `Failed to reject friend request: ${error.message}`,
+        }
       }
-    }
 
-    return { type: "success", data }
+      return { type: "success" }
+    }
+  } catch (error) {
+    console.log(error)
+    return {
+      type: "error",
+      message: `An error occurred while responding to the friend request: ${error.message}`,
+    }
   }
 }

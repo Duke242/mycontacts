@@ -94,3 +94,56 @@ export async function addProfile(formData: FormData) {
 
   return { type: "success", data }
 }
+
+export async function getUserConnections(session: string) {
+  try {
+    const { data, error } = await supabase
+      .from("connections")
+      .select()
+      .eq("user_id", session)
+    console.log({ data })
+    if (error) {
+      console.log(error)
+      return {
+        type: "error",
+        message: `Failed to fetch user connections: ${error.message}`,
+      }
+    }
+
+    return { type: "success", data }
+  } catch (error) {
+    console.error("Error fetching user connections:", error)
+    return {
+      type: "error",
+      message: "Failed to fetch user connections",
+    }
+  }
+}
+
+export async function changePermissionLevel(
+  connectionId: string,
+  newPermissionLevel: number
+) {
+  try {
+    const { data, error } = await supabase
+      .from("connections")
+      .update({ permission_level: newPermissionLevel })
+      .eq("id", connectionId)
+
+    if (error) {
+      console.log(error)
+      return {
+        type: "error",
+        message: `Failed to change permission level: ${error.message}`,
+      }
+    }
+
+    return { type: "success", data }
+  } catch (error) {
+    console.error("Error changing permission level:", error)
+    return {
+      type: "error",
+      message: "Failed to change permission level",
+    }
+  }
+}
