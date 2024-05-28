@@ -13,8 +13,8 @@ interface FormData {
   instagram: string
   bio: string
   email: string // Type notation for email as string
-  phone: number
-  dob: null
+  phone: number | undefined
+  dob: string | undefined
 }
 
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -101,7 +101,7 @@ export async function getUserConnections(session: string) {
       .from("connections")
       .select()
       .eq("user_id", session)
-    console.log({ data })
+
     if (error) {
       console.log(error)
       return {
@@ -125,6 +125,7 @@ export async function changePermissionLevel(
   newPermissionLevel: number
 ) {
   try {
+    console.log({ connectionId, newPermissionLevel })
     const { data, error } = await supabase
       .from("connections")
       .update({ permission_level: newPermissionLevel })

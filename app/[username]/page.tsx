@@ -39,20 +39,27 @@ export default async function Page({
   }
 
   const isOwner = session?.user?.id === data.creator_id
+  let connectionLevel = 0
+  let alreadyFriends = false
 
-  // Query the connections table to determine the connection level
-  const { data: connectionData, error: connectionError } = await supabase
-    .from("connections")
-    .select("permission_level")
-    .eq("user_id", data.creator_id)
-    .eq("friend_id", session?.user?.id)
-    .single()
+  if (!isOwner) {
+    // Query the connections table to determine the connection level
+    const { data: connectionData, error: connectionError } = await supabase
+      .from("connections")
+      .select("permission_level")
+      .eq("user_id", data.creator_id)
+      .eq("friend_id", session?.user?.id)
+      .single()
 
-  if (connectionError) {
-    console.log(connectionError)
+    if (connectionError) {
+      console.log(connectionError)
+    }
+
+    if (connectionData) {
+      connectionLevel = connectionData.permission_level
+      alreadyFriends = true
+    }
   }
-
-  const connectionLevel = connectionData?.permission_level || 0
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
@@ -62,55 +69,61 @@ export default async function Page({
           <p className="text-gray-700">
             <strong>Username:</strong> {data.username}
           </p>
-          <p className="text-gray-700">
-            <strong>First Name:</strong>{" "}
-            {connectionLevel >= 1 ? data.firstName : "******"}
-          </p>
-          <p className="text-gray-700">
-            <strong>Last Name:</strong>{" "}
-            {connectionLevel >= 1 ? data.lastName : "******"}
-          </p>
-          <p className="text-gray-700">
-            <strong>Address:</strong>{" "}
-            {connectionLevel >= 2 ? data.address : "******"}
-          </p>
-        </div>
-        <div>
-          <p className="text-gray-700">
-            <strong>Facebook:</strong>{" "}
-            {connectionLevel >= 1 ? data.facebook : "******"}
-          </p>
-          <p className="text-gray-700">
-            <strong>Twitter:</strong>{" "}
-            {connectionLevel >= 1 ? data.twitter : "******"}
-          </p>
-          <p className="text-gray-700">
-            <strong>Instagram:</strong>{" "}
-            {connectionLevel >= 1 ? data.instagram : "******"}
-          </p>
-          <p className="text-gray-700">
-            <strong>Bio:</strong> {connectionLevel >= 1 ? data.bio : "******"}
-          </p>
-        </div>
-        <div>
-          <p className="text-gray-700">
-            <strong>Email:</strong>{" "}
-            {connectionLevel >= 2 ? data.email : "******"}
-          </p>
-          <p className="text-gray-700">
-            <strong>Phone:</strong>{" "}
-            {connectionLevel >= 2 ? data.phone : "******"}
-          </p>
-          <p className="text-gray-700">
-            <strong>Date of Birth:</strong>{" "}
-            {connectionLevel >= 2 ? data.dob : "******"}
-          </p>
+          {isOwner || connectionLevel >= 1 ? (
+            <>
+              <p className="text-gray-700">
+                <strong>First Name:</strong> {data.firstName}
+              </p>
+              <p className="text-gray-700">
+                <strong>Last Name:</strong> {data.lastName}
+              </p>
+            </>
+          ) : null}
+          {isOwner || connectionLevel >= 3 ? (
+            <p className="text-gray-700">
+              <strong>Address:</strong> {data.address}
+            </p>
+          ) : null}
+          {isOwner || connectionLevel >= 1 ? (
+            <>
+              <p className="text-gray-700">
+                <strong>Facebook:</strong> {data.facebook}
+              </p>
+              <p className="text-gray-700">
+                <strong>Twitter:</strong> {data.twitter}
+              </p>
+              <p className="text-gray-700">
+                <strong>Instagram:</strong> {data.instagram}
+              </p>
+              <p className="text-gray-700">
+                <strong>Bio:</strong> {data.bio}
+              </p>
+            </>
+          ) : null}
+          {isOwner || connectionLevel >= 2 ? (
+            <p className="text-gray-700">
+              <strong>Email:</strong> {data.email}
+            </p>
+          ) : null}
+          {isOwner || connectionLevel >= 3 ? (
+            <p className="text-gray-700">
+              <strong>Phone:</strong> {data.phone}
+            </p>
+          ) : null}
+          {isOwner || connectionLevel >= 2 ? (
+            <p className="text-gray-700">
+              <strong>Date of Birth:</strong> {data.dob}
+            </p>
+          ) : null}
         </div>
       </div>
-      {!isOwner && (
+      {!isOwner && !alreadyFriends && (
         <>
           <FriendRequestButton session={session} creatorId={data.creator_id} />
         </>
+      )}
+      {!isOwner && alreadyFriends && (
+        <p className="text-gray-700">You are already friends!</p>
       )}
     </div>
   )

@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect, ChangeEvent, FormEvent } from "react"
+import toast from "react-hot-toast"
 import {
   editProfile,
   getUserConnections,
@@ -9,7 +10,6 @@ import {
   getFriendRequests,
   respondToFriendRequest,
 } from "@/libs/friendRequests"
-import toast from "react-hot-toast"
 
 interface FormData {
   firstName: string
@@ -22,19 +22,19 @@ interface FormData {
   bio: string
   email: string
   phone: number | undefined
-  dob: null
+  dob: string | undefined
 }
 
 interface FriendRequest {
   id: string
-  senderEmail: string // Added senderEmail to the FriendRequest interface
+  senderEmail: string
 }
 
 interface Connection {
   id: string
   userId: string
   friend_id: string
-  permissionLevel: number
+  permission_level: number
   friend_email: string
 }
 
@@ -43,8 +43,77 @@ interface AdminProps {
   session: string
 }
 
+interface ConnectionListProps {
+  connections: Connection[]
+  onPermissionLevelChange: () => void
+}
+
+const ConnectionList: React.FC<ConnectionListProps> = ({
+  connections,
+  onPermissionLevelChange,
+}) => {
+  const [selectedPermissionLevels, setSelectedPermissionLevels] = useState<{
+    [key: string]: number
+  }>({})
+
+  const handlePermissionLevelChange = (id: string, newLevel: number) => {
+    setSelectedPermissionLevels((prevLevels) => ({
+      ...prevLevels,
+      [id]: newLevel,
+    }))
+  }
+
+  const handleConfirm = async (id: string) => {
+    const newLevel = selectedPermissionLevels[id]
+    if (newLevel !== undefined) {
+      await changePermissionLevel(id, newLevel)
+      onPermissionLevelChange()
+    }
+  }
+
+  return (
+    <ul>
+      {connections.map((connection) => (
+        <li key={connection.id} className="mb-4">
+          <p>Friend Email: {connection.friend_email}</p>
+          <label>
+            Permission Level:
+            <select
+              value={
+                selectedPermissionLevels[connection.id] !== undefined
+                  ? selectedPermissionLevels[connection.id]
+                  : connection.permission_level
+              }
+              onChange={(e) =>
+                handlePermissionLevelChange(
+                  connection.id,
+                  parseInt(e.target.value)
+                )
+              }
+            >
+              <option value={0}>0</option>
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+              <option value={3}>3</option>
+            </select>
+          </label>
+          <button
+            type="button"
+            onClick={() => handleConfirm(connection.id)}
+            className="ml-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+          >
+            Confirm
+          </button>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 function Admin({ initialProfile, session }: AdminProps) {
-  const [formData, setFormData] = useState<FormData>(initialProfile)
+  const [formData, setFormData] = useState<FormData>({
+    ...initialProfile,
+  })
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([])
   const [connections, setConnections] = useState<Connection[]>([])
 
@@ -55,7 +124,7 @@ function Admin({ initialProfile, session }: AdminProps) {
         if (response.type === "success") {
           const formattedFriendRequests = response.data.map((request) => ({
             id: request.id,
-            senderEmail: request.sender_email, // Assign senderEmail from the response to the formattedFriendRequests
+            senderEmail: request.sender_email,
           }))
           setFriendRequests(formattedFriendRequests)
         } else {
@@ -67,24 +136,25 @@ function Admin({ initialProfile, session }: AdminProps) {
       }
     }
     fetchFriendRequests()
-  }, [initialProfile.email])
+  }, [session])
 
   useEffect(() => {
-    const fetchConnections = async () => {
-      try {
-        const response = await getUserConnections(session)
-        if (response.type === "success") {
-          setConnections(response.data)
-        } else {
-          toast.error(response.message)
-        }
-      } catch (error) {
-        console.error("Error fetching connections:", error)
-        toast.error("Failed to fetch connections")
-      }
-    }
     fetchConnections()
   }, [session])
+
+  const fetchConnections = async () => {
+    try {
+      const response = await getUserConnections(session)
+      if (response.type === "success") {
+        setConnections(response.data)
+      } else {
+        toast.error(response.message)
+      }
+    } catch (error) {
+      console.error("Error fetching connections:", error)
+      toast.error("Failed to fetch connections")
+    }
+  }
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -216,7 +286,6 @@ function Admin({ initialProfile, session }: AdminProps) {
               className="w-full p-2 border border-gray-300 rounded mt-1"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Email:
@@ -282,8 +351,7 @@ function Admin({ initialProfile, session }: AdminProps) {
           <ul>
             {friendRequests.map((request) => (
               <li key={request.id} className="mb-4">
-                <p>Sender Email: {request.senderEmail}</p>{" "}
-                {/* Display sender's email */}
+                <p>Sender Email: {request.senderEmail}</p>
                 <button
                   onClick={() => handleFriendRequestResponse(request.id, true)}
                   className="mr-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700"
@@ -303,23 +371,10 @@ function Admin({ initialProfile, session }: AdminProps) {
       </div>
       <div className="mt-8">
         <h2 className="text-xl font-bold mb-4">Friends</h2>
-        <ul>
-          {connections.map((connection) => (
-            <li key={connection.id} className="mb-4">
-              <p>Friend ID: {connection.friend_id}</p>
-              <label>
-                Permission Level:
-                <input
-                  type="number"
-                  value={connection.permissionLevel}
-                  // onChange={(e) =>
-                  // handlePermissionLevelChange(e, connection.id)
-                  // }
-                />
-              </label>
-            </li>
-          ))}
-        </ul>
+        <ConnectionList
+          connections={connections}
+          onPermissionLevelChange={fetchConnections}
+        />
       </div>
     </div>
   )
