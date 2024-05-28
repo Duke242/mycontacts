@@ -10,6 +10,8 @@ import {
   getFriendRequests,
   respondToFriendRequest,
 } from "@/libs/friendRequests"
+import { IoIosNotifications } from "react-icons/io"
+import { FaUserFriends } from "react-icons/fa"
 
 interface FormData {
   firstName: string
@@ -66,15 +68,20 @@ const ConnectionList: React.FC<ConnectionListProps> = ({
   const handleConfirm = async (id: string) => {
     const newLevel = selectedPermissionLevels[id]
     if (newLevel !== undefined) {
-      await changePermissionLevel(id, newLevel)
-      onPermissionLevelChange()
+      const response = await changePermissionLevel(id, newLevel)
+      if (response.type === "success") {
+        toast.success(`Permission level changed successfully to ${newLevel}`)
+        onPermissionLevelChange()
+      } else {
+        toast.error(response.message)
+      }
     }
   }
 
   return (
     <ul>
       {connections.map((connection) => (
-        <li key={connection.id} className="mb-4">
+        <li key={connection.id} className="mb-4 flex flex-col">
           <p>Friend Email: {connection.friend_email}</p>
           <label>
             Permission Level:
@@ -90,6 +97,7 @@ const ConnectionList: React.FC<ConnectionListProps> = ({
                   parseInt(e.target.value)
                 )
               }
+              className="text-xl ml-2"
             >
               <option value={0}>0</option>
               <option value={1}>1</option>
@@ -100,7 +108,7 @@ const ConnectionList: React.FC<ConnectionListProps> = ({
           <button
             type="button"
             onClick={() => handleConfirm(connection.id)}
-            className="ml-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 w-fit mx-auto mt-2"
           >
             Confirm
           </button>
@@ -116,6 +124,9 @@ function Admin({ initialProfile, session }: AdminProps) {
   })
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([])
   const [connections, setConnections] = useState<Connection[]>([])
+  const [showFriendRequests, setShowFriendRequests] = useState(false)
+  const [showFriends, setShowFriends] = useState(false)
+  const [newFriendRequest, setNewFriendRequest] = useState(false)
 
   useEffect(() => {
     const fetchFriendRequests = async () => {
@@ -126,7 +137,10 @@ function Admin({ initialProfile, session }: AdminProps) {
             id: request.id,
             senderEmail: request.sender_email,
           }))
-          setFriendRequests(formattedFriendRequests)
+          if (formattedFriendRequests.length > 0) {
+            setFriendRequests(formattedFriendRequests)
+            setNewFriendRequest(true)
+          }
         } else {
           toast.error(response.message)
         }
@@ -194,14 +208,106 @@ function Admin({ initialProfile, session }: AdminProps) {
     }
   }
 
+  const handleToggleFriendRequests = () => {
+    setShowFriendRequests(!showFriendRequests)
+    if (showFriends) {
+      setShowFriends(false)
+    }
+  }
+
+  const handleToggleFriends = () => {
+    setShowFriends(!showFriends)
+    if (showFriendRequests) {
+      setShowFriendRequests(false)
+    }
+  }
+
   return (
-    <div className="flex flex-col-reverse justify-center items-center mt-2">
+    <div className="flex flex-col justify-center items-center mt-2 relative bg-blue-200 p-5 pb-10 rounded-lg">
+      <div className=" right-0 flex space-x-4 ml-auto mb-5">
+        <div className="relative">
+          <div
+            onClick={handleToggleFriendRequests}
+            style={{
+              cursor: "pointer",
+              boxShadow: "0 4px 8px 0 rgba(0,0,0,0.2)",
+              transition: "0.3s",
+              color: showFriendRequests ? "lightblue" : "gray",
+              borderRadius: 12,
+              backgroundColor: "white",
+            }}
+          >
+            <IoIosNotifications size={40} />
+            {newFriendRequest && (
+              <div className="absolute -top-1 -right-1 bg-red-500 rounded-full w-3 h-3"></div>
+            )}
+          </div>
+          {showFriendRequests && (
+            <div className="absolute top-full right-0 w-64 bg-white shadow-lg rounded-lg p-4">
+              {friendRequests.length === 0 ? (
+                <p>No friend requests</p>
+              ) : (
+                <ul>
+                  {friendRequests.map((request) => (
+                    <li key={request.id} className="mb-4">
+                      <p>Sender Email: {request.senderEmail}</p>
+                      <button
+                        onClick={handleToggleFriends}
+                        className="mr-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleFriendRequestResponse(request.id, false)
+                        }
+                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700"
+                      >
+                        Reject
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+        <div>
+          <div
+            onClick={handleToggleFriends}
+            style={{
+              cursor: "pointer",
+              boxShadow: "0 4px 8px 0 rgba(0,0,0,0.2)",
+              transition: "0.3s",
+              color: showFriends ? "lightblue" : "gray",
+              backgroundColor: "white",
+              borderRadius: 12,
+              padding: 1,
+            }}
+          >
+            <FaUserFriends size={40} />
+          </div>
+          {showFriends && (
+            <div className="absolute mt-1 right-0 bg-white p-4 shadow-lg rounded-lg">
+              <div className="bg-gray-200 p-2 rounded-lg">
+                <ConnectionList
+                  connections={connections}
+                  onPermissionLevelChange={fetchConnections}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
       <form
         onSubmit={handleSubmit}
         className="bg-gray-200 p-8 md:mt-0 mt-4 rounded-lg shadow-2xl w-full max-w-6xl"
       >
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">
+          <label
+            className="block text-sm font-medium text-gray-700"
+            style={{ userSelect: "none" }}
+          >
             Username:
           </label>
           <input
@@ -337,45 +443,12 @@ function Admin({ initialProfile, session }: AdminProps) {
         <div className="flex">
           <button
             type="submit"
-            className="flex inline-flex mx-auto mt-4 justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="flex inline-flex mx-auto mt-4 justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Update Profile
           </button>
         </div>
       </form>
-      <div className="mt-8">
-        <h2 className="text-xl font-bold mb-4">Friend Requests</h2>
-        {friendRequests.length === 0 ? (
-          <p>No friend requests</p>
-        ) : (
-          <ul>
-            {friendRequests.map((request) => (
-              <li key={request.id} className="mb-4">
-                <p>Sender Email: {request.senderEmail}</p>
-                <button
-                  onClick={() => handleFriendRequestResponse(request.id, true)}
-                  className="mr-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700"
-                >
-                  Accept
-                </button>
-                <button
-                  onClick={() => handleFriendRequestResponse(request.id, false)}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700"
-                >
-                  Reject
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      <div className="mt-8">
-        <h2 className="text-xl font-bold mb-4">Friends</h2>
-        <ConnectionList
-          connections={connections}
-          onPermissionLevelChange={fetchConnections}
-        />
-      </div>
     </div>
   )
 }
