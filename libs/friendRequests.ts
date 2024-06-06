@@ -5,9 +5,7 @@ import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 
 export async function sendFriendRequest(senderId: string, receiverId: string) {
   const supabase = createServerComponentClient({ cookies })
-  console.log({ senderId: senderId, receiverId: receiverId })
 
-  // Check if the sender and receiver are the same
   if (senderId === receiverId) {
     return {
       type: "error",
@@ -15,7 +13,6 @@ export async function sendFriendRequest(senderId: string, receiverId: string) {
     }
   }
 
-  // Check if a friend request already exists
   const { data: existingRequest, error: existingRequestError } = await supabase
     .from("friend_requests")
     .select("*")
@@ -116,6 +113,31 @@ export async function respondToFriendRequest(
     return {
       type: "error",
       message: `An error occurred while responding to the friend request: ${error.message}`,
+    }
+  }
+}
+
+export async function removeFriend(connectionId: string) {
+  const supabase = createServerComponentClient({ cookies })
+
+  try {
+    const { error: deleteConnectionError } = await supabase
+      .from("connections")
+      .delete()
+      .eq("id", connectionId)
+
+    if (deleteConnectionError) {
+      return {
+        type: "error",
+        message: `Failed to remove friend connection: ${deleteConnectionError.message}`,
+      }
+    }
+
+    return { type: "success" }
+  } catch (error) {
+    return {
+      type: "error",
+      message: `An error occurred while removing the friend: ${error.message}`,
     }
   }
 }

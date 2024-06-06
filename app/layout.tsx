@@ -10,6 +10,7 @@ import { Suspense } from "react"
 import { Analytics } from "@vercel/analytics/react"
 
 const font = Inter({ subsets: ["latin"] })
+// const openSans = Open_Sans({ subsets: ["latin"] })
 
 export const viewport: Viewport = {
   // Will use the primary color of your theme to show a nice theme color in the URL bar of supported browsers

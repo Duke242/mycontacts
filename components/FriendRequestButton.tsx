@@ -40,7 +40,7 @@ const FriendRequestButton: React.FC<FriendRequestButtonProps> = ({
       >
         {loading ? "Sending..." : "Send Friend Request"}
       </button>
-      {status && <p className="mt-2 text-red-500">{status}</p>}
+      {status && <p className="mt-2 text-blue-500">{status}</p>}
     </div>
   )
 }

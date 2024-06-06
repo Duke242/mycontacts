@@ -13,7 +13,8 @@ const Hero = () => {
         <div className="text-left flex">
           <div className="flex-grow w-1/2">
             <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 bg-blue-500 pb-4">
-              Met someone new? Quickly give your contact information.
+              Met someone new? Quickly give your contact information with a link
+              or QR code.
             </h1>
             <p className="text-xl text-gray-500">
               Quickly exchange your contact information and choose how much info

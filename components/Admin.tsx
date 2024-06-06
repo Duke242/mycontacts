@@ -8,10 +8,12 @@ import {
 } from "@/libs/serverActions"
 import {
   getFriendRequests,
+  removeFriend,
   respondToFriendRequest,
 } from "@/libs/friendRequests"
 import { IoIosNotifications } from "react-icons/io"
 import { FaUserFriends } from "react-icons/fa"
+import { Tooltip as ReactTooltip } from "react-tooltip"
 
 interface FormData {
   firstName: string
@@ -54,27 +56,36 @@ const ConnectionList: React.FC<ConnectionListProps> = ({
   connections,
   onPermissionLevelChange,
 }) => {
-  const [selectedPermissionLevels, setSelectedPermissionLevels] = useState<{
-    [key: string]: number
-  }>({})
+  const [selectedPermissionLevel, setSelectedPermissionLevel] = useState<{
+    id: string
+    level: number
+  } | null>(null)
 
   const handlePermissionLevelChange = (id: string, newLevel: number) => {
-    setSelectedPermissionLevels((prevLevels) => ({
-      ...prevLevels,
-      [id]: newLevel,
-    }))
+    setSelectedPermissionLevel({ id, level: newLevel })
   }
 
-  const handleConfirm = async (id: string) => {
-    const newLevel = selectedPermissionLevels[id]
-    if (newLevel !== undefined) {
-      const response = await changePermissionLevel(id, newLevel)
+  const handleConfirm = async () => {
+    if (selectedPermissionLevel) {
+      const { id, level } = selectedPermissionLevel
+      const response = await changePermissionLevel(id, level)
       if (response.type === "success") {
-        toast.success(`Permission level changed successfully to ${newLevel}`)
+        toast.success(`Permission level changed successfully to ${level}`)
         onPermissionLevelChange()
+        setSelectedPermissionLevel(null)
       } else {
         toast.error(response.message)
       }
+    }
+  }
+
+  const handleRemoveFriend = async (connectionId: string) => {
+    const response = await removeFriend(connectionId)
+    if (response.type === "success") {
+      toast.success("Friend removed successfully")
+      onPermissionLevelChange()
+    } else {
+      toast.error(response.message)
     }
   }
 
@@ -88,13 +99,20 @@ const ConnectionList: React.FC<ConnectionListProps> = ({
       ) : (
         connections.map((connection) => (
           <li key={connection.id} className="mb-4 flex flex-col">
-            <p>Friend Email: {connection.friend_email}</p>
-            <label>
-              Permission Level:
+            <div className="flex items-center">
+              <label className="text-xs font-medium text-gray-500 mr-2">
+                Friend Email:
+              </label>
+              <p className="text-sm">{connection.friend_email}</p>
+            </div>
+            <div className="flex items-center mt-1">
+              <label className="text-xs font-medium text-gray-500 mr-2">
+                Permission Level:
+              </label>
               <select
                 value={
-                  selectedPermissionLevels[connection.id] !== undefined
-                    ? selectedPermissionLevels[connection.id]
+                  selectedPermissionLevel?.id === connection.id
+                    ? selectedPermissionLevel.level
                     : connection.permission_level
                 }
                 onChange={(e) =>
@@ -103,34 +121,47 @@ const ConnectionList: React.FC<ConnectionListProps> = ({
                     parseInt(e.target.value)
                   )
                 }
-                className="text-md ml-2"
+                className="text-sm py-1 px-2 border border-gray-300 rounded"
               >
                 <option value={0}>No Access</option>
                 <option value={1}>Limited Access</option>
                 <option value={2}>Moderate Access</option>
                 <option value={3}>Full Access</option>
               </select>
-            </label>
-            <button
-              type="button"
-              onClick={() => handleConfirm(connection.id)}
-              className={`px-4 py-2 bg-${
-                selectedPermissionLevels[connection.id] ===
-                connection.permission_level
-                  ? "green"
-                  : "blue"
-              }-500 text-white rounded hover:bg-${
-                selectedPermissionLevels[connection.id] ===
-                connection.permission_level
-                  ? "green"
-                  : "blue"
-              }-700 w-fit mx-auto mt-2`}
-            >
-              {selectedPermissionLevels[connection.id] ===
-              connection.permission_level
-                ? "Confirmed"
-                : "Confirm"}
-            </button>
+            </div>
+            <div className="flex justify-center mt-2">
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={
+                  selectedPermissionLevel?.id !== connection.id ||
+                  selectedPermissionLevel?.level === connection.permission_level
+                }
+                className={`px-4 py-2 bg-${
+                  selectedPermissionLevel?.id === connection.id &&
+                  selectedPermissionLevel?.level !== connection.permission_level
+                    ? "blue"
+                    : "green"
+                }-500 text-white rounded hover:bg-${
+                  selectedPermissionLevel?.id === connection.id &&
+                  selectedPermissionLevel?.level !== connection.permission_level
+                    ? "blue"
+                    : "green"
+                }-700 text-sm mr-2`}
+              >
+                {selectedPermissionLevel?.id === connection.id &&
+                selectedPermissionLevel?.level !== connection.permission_level
+                  ? "Confirm"
+                  : "Confirmed"}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRemoveFriend(connection.id)}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700 text-sm"
+              >
+                Remove
+              </button>
+            </div>
           </li>
         ))
       )}
@@ -152,13 +183,11 @@ function Admin({ initialProfile, session }: AdminProps) {
     const fetchFriendRequests = async () => {
       try {
         const response = await getFriendRequests(session)
-        console.log({ response })
         if (response.type === "success") {
           const formattedFriendRequests = response.data.map((request) => ({
             id: request.id,
             senderEmail: request.sender_email,
           }))
-          console.log(formattedFriendRequests)
           if (formattedFriendRequests.length > 0) {
             setFriendRequests(formattedFriendRequests)
             setNewFriendRequest(true)
@@ -245,71 +274,29 @@ function Admin({ initialProfile, session }: AdminProps) {
   }
 
   return (
-    <div className="flex flex-col justify-center items-center mt-2 relative bg-blue-200 p-5 pb-10 rounded-lg">
-      <div className=" right-0 flex space-x-4 ml-auto mb-5">
-        <div className="relative">
-          <div
-            onClick={handleToggleFriendRequests}
-            style={{
-              cursor: "pointer",
-              boxShadow: "0 4px 8px 0 rgba(0,0,0,0.2)",
-              transition: "0.3s",
-              color: showFriendRequests ? "lightblue" : "gray",
-              borderRadius: 12,
-              backgroundColor: "white",
-            }}
-          >
-            <IoIosNotifications size={40} />
-            {newFriendRequest && (
-              <div className="absolute -top-1 -right-1 bg-red-500 rounded-full w-3 h-3"></div>
-            )}
-          </div>
-          {showFriendRequests && (
-            <div className="absolute top-full right-0 w-64 bg-white shadow-lg rounded-lg p-4">
-              {friendRequests.length === 0 ? (
-                <p>No friend requests</p>
-              ) : (
-                <ul>
-                  {friendRequests.map((request) => (
-                    <li key={request.id} className="mb-4">
-                      <p>Sender Email: {request.senderEmail}</p>
-                      <button
-                        onClick={() =>
-                          handleFriendRequestResponse(request.id, true)
-                        }
-                        className="mr-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleFriendRequestResponse(request.id, false)
-                        }
-                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700"
-                      >
-                        Reject
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-        </div>
+    <div className="flex flex-col justify-center items-center mt-2 relative p-5 pb-10 rounded-lg">
+      <div className="right-0 flex space-x-2 ml-auto mb-5">
         <div>
           <div
             onClick={handleToggleFriends}
+            className="hover:shadow-2xl hover:scale-105"
+            data-tooltip-id="friends-icon"
             style={{
               cursor: "pointer",
-              boxShadow: "0 4px 8px 0 rgba(0,0,0,0.2)",
               transition: "0.3s",
               color: showFriends ? "lightblue" : "gray",
               backgroundColor: "white",
               borderRadius: 12,
-              padding: 1,
+              padding: 2,
+              border: "1px solid gray",
             }}
           >
             <FaUserFriends size={40} />
+            <ReactTooltip
+              id="friends-icon"
+              place="bottom"
+              content="Friends & Permissions"
+            />
           </div>
           {showFriends && (
             <div className="absolute mt-1 right-0 bg-white p-4 shadow-lg rounded-lg">
@@ -322,10 +309,79 @@ function Admin({ initialProfile, session }: AdminProps) {
             </div>
           )}
         </div>
+        <div className="relative">
+          <div
+            className="hover:shadow-2xl hover:scale-105"
+            onClick={handleToggleFriendRequests}
+            data-tooltip-id="notifications-icon"
+            style={{
+              cursor: "pointer",
+              transition: "0.3s",
+              color: showFriendRequests ? "lightblue" : "gray",
+              borderRadius: 12,
+              backgroundColor: "white",
+              padding: 2,
+              border: "1px solid gray",
+            }}
+          >
+            <IoIosNotifications size={40} />
+            {newFriendRequest && (
+              <div className="absolute -top-1 -right-1 bg-red-500 rounded-full w-3 h-3"></div>
+            )}
+            <ReactTooltip
+              id="notifications-icon"
+              place="bottom"
+              content="Notifications"
+            />
+          </div>
+          {showFriendRequests && (
+            <div className="absolute top-full right-0 w-fit bg-white shadow-lg rounded-lg p-4">
+              {friendRequests.length === 0 ? (
+                <p className="">No friend requests</p>
+              ) : (
+                <ul>
+                  {friendRequests.map((request) => (
+                    <li
+                      key={request.id}
+                      className="bg-gray-200 w-fit p-2 rounded"
+                    >
+                      <div className="flex flex-col items-center justify-between">
+                        <div>
+                          <p>{request.senderEmail}</p>
+                          <p className="text-sm mb-2">
+                            Sent you a friend request
+                          </p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() =>
+                              handleFriendRequestResponse(request.id, true)
+                            }
+                            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleFriendRequestResponse(request.id, false)
+                            }
+                            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
       </div>
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-200 p-8 md:mt-0 mt-4 rounded-lg shadow-2xl w-full max-w-6xl"
+        className="bg-white p-8 md:mt-0 mt-4 rounded-lg shadow-2xl w-full max-w-6xl"
       >
         <div className="mb-4">
           <label
@@ -463,6 +519,39 @@ function Admin({ initialProfile, session }: AdminProps) {
               className="w-full mx-auto p-2 border border-gray-300 rounded mt-1"
             />
           </div>
+        </div>
+        <div className="mt-8">
+          <h2 className="text-xl font-bold mb-4">
+            Permission Levels and Your Profile Information:
+          </h2>
+          <p className="mb-4">
+            When someone visits your profile, the information they can see
+            depends on their permission level. You can control these permission
+            levels for each of your friends in the Friends & Permissions panel
+            above.
+          </p>
+          <ul className="list-disc pl-6">
+            <li>Level 0: Only your username is visible.</li>
+            <li>
+              Level 1: Your name, social media links, and bio are also visible.
+            </li>
+            <li>
+              Level 2: Your email and date of birth become visible as well.
+            </li>
+            <li>
+              Level 3: Full access, including your address and phone number.
+            </li>
+          </ul>
+          <p className="mt-4">
+            If someone is not your friend, they can only see your username. When
+            you accept a friend request, they are granted the default permission
+            level (Level 1).
+          </p>
+          <p className="mt-4">
+            As the profile owner, you always have access to all your
+            information. Remember to be cautious when granting higher permission
+            levels to protect your privacy.
+          </p>
         </div>
         <div className="flex">
           <button

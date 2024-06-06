@@ -42,11 +42,11 @@ export default async function Dashboard() {
     }
 
     const userAccess = profiles.has_access
-    const username = userProfile?.username // Add the null check here
+    const username = userProfile?.username
 
     if (username) {
       return (
-        <main className="min-h-screen p-8 pb-24 bg-base-100">
+        <main className="min-h-screen p-8 pb-24 bg-blue-50">
           <header className="max-w-xl mr-auto space-y-8 flex align-center mb-0">
             <ButtonAccount />
           </header>
@@ -59,7 +59,7 @@ export default async function Dashboard() {
 
     if (userAccess) {
       return (
-        <main className="min-h-screen p-8 pb-24 bg-base-100">
+        <main className="min-h-screen p-8 pb-24 bg-blue-50">
           <header className="max-w-xl mr-auto space-y-8 flex align-center mb-0">
             <ButtonAccount />
           </header>
