@@ -1,16 +1,16 @@
-# Personal Privacy Social Network
+# Selective Info Sharing
 
 ## Overview
 
-Personal Privacy Social Network is a platform that allows you to control how much information about your personal life is visible to both friends and strangers. With detailed privacy settings, you can manage what information you share and with whom, ensuring that you maintain control over your personal data.
+Selective Info Sharing is a social platform that allows you to control how much information about your personal life is visible to each individual contact. With customizable privacy settings, you can manage and tailor what information is shared on a case-by-case basis.
 
 ## Features
 
-- **Customizable Privacy Settings:** Decide how much information is visible to each friend or stranger on a case-by-case basis.
-- **User Profiles:** Create and manage personal profiles with granular privacy controls.
-- **Social Interaction:** Connect with friends and share private information selectively with strangers as desired.
+- **Customizable Privacy Settings:** Decide how much information is visible to each contact, including friends and strangers.
+- **User Profiles:** Create and manage personal profiles with detailed privacy controls.
+- **Social Interaction:** Connect and interact with others while maintaining control over the information they can see.
 - **Responsive Design:** Optimized for both desktop and mobile devices.
 
 ## Technologies
 
-- Next.js, TypeScript, Tailwind CSS
+-  Next.js, TypeScript, Tailwind CSS
