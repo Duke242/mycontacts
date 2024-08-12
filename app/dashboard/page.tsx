@@ -7,9 +7,6 @@ import Admin from "@/components/Admin"
 
 export const dynamic = "force-dynamic"
 
-// This is a private page: It's protected by the layout.js component which ensures the user is authenticated.
-// It's a server component which means you can fetch data (like the user profile) before the page is rendered.
-// See https://shipfa.st/docs/tutorials/private-page
 export default async function Dashboard() {
   interface Profile {
     has_access: boolean
@@ -46,7 +43,10 @@ export default async function Dashboard() {
 
     if (username) {
       return (
-        <main className="min-h-screen p-8 pb-24 bg-blue-50">
+        <main
+          className="min-h-screen p-8 pb-24"
+          style={{ backgroundImage: "url(/bg.png)" }}
+        >
           <header className="max-w-xl mr-auto space-y-8 flex align-center mb-0">
             <ButtonAccount />
           </header>
